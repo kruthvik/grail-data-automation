@@ -16,7 +16,7 @@ creds = ServiceAccountCredentials.from_json_keyfile_name("service_account.json",
 client = gs.authorize(creds)
 
 
-notices = client.open_by_url("https://docs.google.com/spreadsheets/d/1G1YjFpOYcAnBcHTZq5ySl956VeT6fJRmrSlFiVESCec/edit?gid=0#gid=0").sheet1
+notices = client.open_by_url("GSHEET URL").sheet1
 
 
 def getNumCol(): 
