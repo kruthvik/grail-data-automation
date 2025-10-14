@@ -119,8 +119,11 @@ class CommentScraper():
 
 if __name__ == "__main__":
     scraper = CommentScraper()
-    scraper.scrape("DOT-OST-2024-0049-0001", 1)
+    docNum = input("Enter the Document ID: ")
+    scraper.scrape(docNum, 1)
     scraper.cleanup()
     print(f"\nTotal links collected: {len(scraper.getLinks())}")
     for l in scraper.getLinks():
         print(l)
+
+    print(scraper.getLinks()[1])
