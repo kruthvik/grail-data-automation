@@ -1,6 +1,11 @@
 import requests as req
 import gspread as gs
 from oauth2client.service_account import ServiceAccountCredentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
+from google.oauth2 import service_account
+import io
+from tqdm import tqdm
 
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -10,7 +15,8 @@ scope = [
 creds = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", scope)
 client = gs.authorize(creds)
 
-notices = client.open_by_url("URL OF SPREADSHEET").sheet1
+
+notices = client.open_by_url("https://docs.google.com/spreadsheets/d/1G1YjFpOYcAnBcHTZq5ySl956VeT6fJRmrSlFiVESCec/edit?gid=0#gid=0").sheet1
 
 
 def getNumCol(): 
@@ -45,15 +51,17 @@ def scrape(np, terms):
 
         res = [i for i in res if any(j in i["title"].lower() for j in searchTerms)]
 
+    
+        takenTerms = fetch_taken_terms()
         for i in res:
-            if i["title"] not in fetch_taken_terms():
+            if i["title"] not in takenTerms:
                 docNum = i['document_number']
+                print(i["document_number"])
 
                 commentDateUrl = f"https://www.federalregister.gov/api/v1/documents/{docNum}.json?fields[]=comments_close_on"
                 commentDate = req.get(commentDateUrl).json()
-                print(commentDate)
                 finalCommentDate = commentDate["comments_close_on"]
-
+                    
 
                 agencyNames = [m['name'] for m in i['agencies']]
                 newrow = [i["title"], ', '.join(agencyNames), i['publication_date'], finalCommentDate, i['abstract'], i['html_url'], ""]
