@@ -10,9 +10,14 @@ import glob
 
 import os
 import glob
+import json as js
+from datetime import datetime
+from findAgency import abbreviateAgency
 
-def removeComments():
-    files = glob.glob(os.path.join("comments/", "*"))
+formatCommenter = lambda commenter: re.sub(r"(?i)^(comment submitted by|comment from)\s*", "", commenter).strip()
+
+def removeItems(folder="comments/", removeMetadata=True):
+    files = glob.glob(os.path.join(folder, "*"))
     for f in files:
         if os.path.isfile(f):
             try:
@@ -20,29 +25,27 @@ def removeComments():
                 print(f"Deleted: {f}")
             except Exception as e:
                 print(f"Failed to delete {f}: {e}")
-
-
-def get_agency_prefix(notice_shortname, agency_full):
-    """
-    Determines the prefix for the filename.
-    Uses notice_shortname if it starts with uppercase letters, otherwise uses mapping from agency name.
-    """
-    # Check if notice_shortname already starts with uppercase letters (e.g., DOE-HQ-2024-0007)
-    if re.match(r"^[A-Z]{2,}", notice_shortname):
-        parts = notice_shortname.split("-")
-        parts[0] = parts[0].upper()
-        return "-".join(parts)
-    else:
-        # Fallback: use mapping
-        prefix = AGENCY_ABBR.get(agency_full, agency_full[:3].upper())
-        return f"{prefix}-{notice_shortname}"
+    print("All files removed from", folder)
+    
+    if removeMetadata:
+        with open("./metadata.json", "w", encoding="utf-8") as f:
+            js.dump({}, f)
+            print("Metadata reset.")
+        
+def loadJSON():
+    try:
+        with open("./metadata.json", "r", encoding="utf-8") as f:
+            data = js.load(f)
+            return data
+    except FileNotFoundError:
+        return {}
 
 def make_filename(notice_shortname, commenter, posted_date, agency_full):
-    # Get the proper prefix
-    short = get_agency_prefix(notice_shortname, agency_full)
+    agency_full = agency_full.lower()
+    short = abbreviateAgency(agency_full)
 
     # Clean commenter
-    commenter_clean = re.sub(r"[^\w]", "", commenter)
+    commenter_clean = re.sub(r"[^\w]", "", formatCommenter(commenter))
 
     # Parse date to YYYYMMDD
     try:
@@ -55,15 +58,11 @@ def make_filename(notice_shortname, commenter, posted_date, agency_full):
         except Exception:
             date_str = "unknownDate"
 
-    return f"{short}_{commenter_clean}-{date_str}"
+    return f"{short}_{commenter_clean}_{date_str}"
 
-# def fetchContent():
-#     url = "https://www.regulations.gov/comment/DOT-OST-2024-0049-0018"
-#     r = req.get(url)
-#     soup = bs(r, "html.parser")
-
-def createPDF(info, date, commenter, agency, doc_id):
-    filename_base = make_filename(doc_id, commenter, date, agency)
+def createPDF(info, date, commenter, agency, comment_id):
+    commenter = formatCommenter(commenter)
+    filename_base = make_filename(comment_id, commenter, date, agency)
 
     doc = Document()
 
@@ -71,11 +70,9 @@ def createPDF(info, date, commenter, agency, doc_id):
     doc.add_heading(f"Comment from {commenter}", level=0)
 
     # Add a paragraph
-    doc.add_paragraph(f"Date: {date}\nAgency: {agency}\nID: {doc_id}")
+    doc.add_paragraph(f"Date: {date}\nAgency: {agency}\nID: {comment_id}")
 
     doc.add_paragraph(info)
-
-    num = random.randint(1000, 9999)
 
     # Save the document
     doc.save(f"./comments/{filename_base}.docx")
@@ -83,11 +80,42 @@ def createPDF(info, date, commenter, agency, doc_id):
     print(f"DOCX file saved as {filename_base}.docx")
 
     convert(f"./comments/{filename_base}.docx", f"./comments/{filename_base}.pdf")
+    
+    json = loadJSON()
+    json[filename_base] = {
+        "date": date,
+        "commenter": commenter,
+        "agency": agency,
+        "comment_id": comment_id
+    }
+    
+    with open(f"./metadata.json", "w", encoding="utf-8") as f:
+        js.dump(json, f)
+        print("updated")
+    
+    print(f"PDF file saved as {filename_base}.pdf")
+    
     os.remove(f"./comments/{filename_base}.docx")
 
-def downloadPDF(url, date, commenter, agency, doc_id):
-    r = req.get(url)
-    with open(f"./comments/{make_filename(doc_id, commenter, date, agency)}.pdf", "wb") as f:
-        f.write(r.content)
+def downloadPDF(url, date, commenter, agency, comment_id):
+    commenter = formatCommenter(commenter)
     
-    print(f"PDF file saved as {make_filename(doc_id, commenter, date, agency)}.pdf")
+    r = req.get(url)
+    fname = make_filename(comment_id, commenter, date, agency)
+    
+    with open(f"./comments/{fname}.pdf", "wb") as f:
+        f.write(r.content)
+
+    json = loadJSON()
+    json[fname] = {
+        "date": date,
+        "commenter": commenter,
+        "agency": agency,
+        "comment_id": comment_id
+    }
+    
+    with open(f"./metadata.json", "w", encoding="utf-8") as f:
+        js.dump(json, f)
+        print("updated")
+
+    print(f"PDF file saved as {make_filename(comment_id, commenter, date, agency)}.pdf")
