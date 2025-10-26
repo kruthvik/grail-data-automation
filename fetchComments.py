@@ -6,14 +6,17 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.window import WindowTypes
 from bs4 import BeautifulSoup as bs
+
+from fetchPDF import createPDF, downloadPDF, removeItems
+
 import requests as req
-from fetchPDF import createPDF, downloadPDF, removeComments
 import time
+import re
 
 class CommentScraper():
     def __init__(self):
         self.options = Options()
-        self.options.add_argument("--headless")
+        # self.options.add_argument("--headless")
         self.options.add_argument("--disable-gpu")
         self.options.add_argument("--no-sandbox")
         self.options.add_argument("--window-size=1920,1080")
@@ -21,7 +24,43 @@ class CommentScraper():
         self.driver = webdriver.Chrome(options=self.options)
         self.wait = WebDriverWait(self.driver, 10)
         self.links = []
-        removeComments()
+        
+        removeItems("comments/")
+
+    def initialize(self, docNum):
+        self.driver.get(f"https://www.regulations.gov/search?filter={docNum}")
+        try:
+            self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".card.card-type-notice")))
+        except TimeoutException:
+            print("No document entries found.")
+            return
+
+        ids = []
+        cards = self.driver.find_elements(By.CSS_SELECTOR, ".card.card-type-notice")
+        for card in cards:
+            try:
+                # --- Title and link ---
+                title_tag = card.find_element(By.CSS_SELECTOR, "h3.card-title a")
+                title = title_tag.text.strip()
+                url = title_tag.get_attribute("href")
+                url = url if url.startswith("http") else "https://www.regulations.gov" + url
+
+                # --- Metadata ---
+                metadata_items = card.find_elements(By.CSS_SELECTOR, "div.card-metadata li")
+                data = {}
+                for li in metadata_items:
+                    strong = li.find_element(By.TAG_NAME, "strong").text.strip().lower()
+                    value = li.text.replace(li.find_element(By.TAG_NAME, "strong").text, "").strip()
+                    data[strong] = value
+                    
+                print(data)
+
+                ids.append(data.get("id"))
+            except Exception as e:
+                print("Error parsing entry:", e)
+                continue
+
+        return ids
         
 
     def scrape(self, docNum, page_number):
@@ -56,6 +95,8 @@ class CommentScraper():
                             strong = li.find_element(By.TAG_NAME, "strong").text.strip().lower()
                             value = li.text.replace(li.find_element(By.TAG_NAME, "strong").text, "").strip()
                             data[strong] = value
+                            print(strong)
+                            print(value)
 
                         # --- Extract fields ---
                         agency = data.get("agency", "")
@@ -109,6 +150,9 @@ class CommentScraper():
 
                 page_number += 1
 
+    # def getAgency():
+        
+
     def cleanup(self):
         self.driver.quit()
 
@@ -118,12 +162,20 @@ class CommentScraper():
 
 
 if __name__ == "__main__":
+    doc_id = input("Enter the Document ID: ")
+
     scraper = CommentScraper()
-    docNum = input("Enter the Document ID: ")
-    scraper.scrape(docNum, 1)
+
+    docketIds = scraper.initialize(doc_id)
+    
+    for docketId in docketIds:
+        scraper.scrape(docketId, 1)
+    
     scraper.cleanup()
+
     print(f"\nTotal links collected: {len(scraper.getLinks())}")
     for l in scraper.getLinks():
         print(l)
 
-    print(scraper.getLinks()[1])
+
+    # print(scraper.getLinks()[1])
