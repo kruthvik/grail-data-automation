@@ -25,7 +25,7 @@ FIELDS = [
 ]
 
 # ---------------- Google Sheets setup ----------------
-link = "https://docs.google.com/spreadsheets/d/1n7l_velbqHHLpHI_V0NYwU8m7KeDGIShvdbxJ4sX5Co/edit?gid=0#gid=0"
+link = "SHEET LINK"
 
 creds = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -40,7 +40,7 @@ spreadsheet = client.open_by_url(link)
 ollama = Client(
     host="https://ollama.com",  # ✅ Correct endpoint for Ollama Cloud
     headers={
-        "Authorization": "Bearer 118347b4d2404a13ad59ea034ea6c88e.y3rHTTlshlZgTcmr8Riqh5Sb",
+        "Authorization": "Bearer [AP ID]",
         "Content-Type": "application/json"
     }
 )
@@ -177,3 +177,4 @@ if __name__ == "__main__":
             print(f"⚠️ Skipped {pdf_file} due to extraction failure.")
 
     print("\n🎯 All done!")
+
