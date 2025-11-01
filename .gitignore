@@ -4,3 +4,4 @@
 ./__pycache__
 ./t.py
 ./test.py
+"service_account.json" 
