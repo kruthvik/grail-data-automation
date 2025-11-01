@@ -1,0 +1,6 @@
+./comments
+./logs
+./metadata.json
+./__pycache__
+./t.py
+./test.py
