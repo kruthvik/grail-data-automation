@@ -1,0 +1,13 @@
+Organization Name: AMERICAN BANKERS ASSOCIATION
+Date Submitted: Jun 29, 2021
+Submitter Name: Matthew A. Daigler
+Organization Type: Banking Association
+Contact Information: P 202-663-5253 mdaigler@aba.com
+COMMENT-ID: CFPB-2021-0004-0032
+Filename: N/A
+Brief Summary of Comment: The American Bankers Association submitted comments on the request for information regarding financial institutions' use of artificial intelligence and machine learning, emphasizing that existing banking regulations adequately address AI risks and that new regulations are unnecessary.
+Relevant Issues Addressed: Artificial Intelligence and Machine Learning in Financial Services, Regulatory Clarity for AI Implementation, Consistent Application of Rules Across Financial Service Providers, Coordinated Regulatory Approach, Fair Lending and Disparate Impact Risk Management, Innovation Programs for AI Adoption
+date: Jun 29, 2021
+commenter: AMERICAN BANKERS ASSOCIATION
+agency: Consumer Financial Protection Bureau
+comment_id: CFPB-2021-0004-0032
