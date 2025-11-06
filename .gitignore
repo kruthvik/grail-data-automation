@@ -1,7 +1,7 @@
-./comments
-./logs
-./metadata.json
-./__pycache__
-./t.py
-./test.py
-"service_account.json" 
+# Ignore directories
+__pycache__/
+.vscode/
+
+# Ignore files
+service_account.json
+.env
